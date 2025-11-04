@@ -7,3 +7,5 @@ NIH-NLM-ThinBloodSmearsPf/
 runs/
 
 malaria_yolo_folder/
+
+wandb/
