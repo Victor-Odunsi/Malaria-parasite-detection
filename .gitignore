@@ -9,3 +9,9 @@ runs/
 malaria_yolo_folder/
 
 wandb/
+
+rag-env/
+
+__pycache__/
+
+*.pyc
