@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_host: str = '0.0.0.0'
 
+    cors_allowed_origins: list[str] = ["*"]
+
     model_dir: Path = Path('models')
 
     model_config = SettingsConfigDict(
@@ -19,12 +21,11 @@ class Settings(BaseSettings):
 
     def get_model_path(self) -> Path:
         return self.model_dir / self.hf_model_filename
-
-    def get_hf_model_url(self) -> str:
-        return f"https://huggingface.co/{self.hf_repo_name}/resolve/main/{self.hf_model_filename}"
     
     def make_model_dir(self):
         self.model_dir.mkdir(parents=True, exist_ok=True)
 
 settings = Settings()
 
+def get_settings() -> Settings:
+    return settings
