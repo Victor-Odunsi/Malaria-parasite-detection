@@ -15,3 +15,5 @@ rag-env/
 __pycache__/
 
 *.pyc
+
+models/
