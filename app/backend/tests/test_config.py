@@ -31,11 +31,13 @@ class TestSettings:
         """Test that environment variables override default settings."""
         monkeypatch.setenv('HF_REPO_NAME', 'custom/repo-name')
         monkeypatch.setenv('HF_MODEL_FILENAME', 'custom_model.onnx')
+        monkeypatch.setenv('CONFIDENCE_TRESHOLD', '0.75')
         
         settings = Settings()
         
         assert settings.hf_repo_name == 'custom/repo-name'
         assert settings.hf_model_filename == 'custom_model.onnx'
+        assert settings.confidence_threshold == 0.75
 
     def test_env_variable_list_override(self, monkeypatch):
         """Test that environment variable list overrides default CORS origins."""

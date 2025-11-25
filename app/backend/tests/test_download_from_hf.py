@@ -1,9 +1,9 @@
 import os
 from pathlib import Path
-from unittest.mock import patch, MagicMock, Mock
+from unittest.mock import patch, Mock
 import pytest
 import requests
-from config import Settings
+from app.backend.config import Settings
 
 from download_from_hf import (
     download_with_huggingface_hub,
@@ -180,7 +180,7 @@ class TestCheckModelExists:
         settings = Settings(model_dir=tmp_path / "models")
         model_path = settings.get_model_path()
         
-        model_path.parent.mkdir(parents=True, exist_ok=True)
+        settings.make_model_dir()
         model_path.write_bytes(b"0" * (2 * 1024 * 1024))
         
         result = ensure_model_exists(settings)

@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from huggingface_hub import hf_hub_download
-from config import get_settings, Settings
+from app.backend.config import get_settings, Settings
 from typing import Optional
 import shutil
 import logging

@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_host: str = '0.0.0.0'
 
+    confidence_threshold: float = 0.5
+
     cors_allowed_origins: list[str] = ["*"]
 
     model_dir: Path = Path('models')
