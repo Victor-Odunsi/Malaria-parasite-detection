@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY app/backend /app/app/backend
 
 # Expose FastAPI port
-EXPOSE 7860
+EXPOSE $PORT
 
 # Start the backend with uvicorn directly
-CMD ["uvicorn", "app.backend.main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["sh", "-c", "uvicorn app.backend.main:app --host 0.0.0.0 --port $PORT"]
