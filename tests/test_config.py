@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from config import Settings
+from app.backend.config import Settings
 import pytest
 
 class TestSettings:
@@ -21,17 +21,17 @@ class TestSettings:
         settings = Settings()
         model_path = settings.get_model_path()
         assert model_path.name == 'best.onnx'
-        assert str(model_path) == "models/best.onnx"
+        assert model_path == Path('models') / 'best.onnx'
 
     def test_custom_model_path(self):
         settings = Settings(model_dir = Path('custom/path'))
-        assert settings.get_model_path() == 'custom/path/best.onnx'
+        assert settings.get_model_path() == Path('custom/path') / 'best.onnx'
 
     def test_env_variable_override(self, monkeypatch):
         """Test that environment variables override default settings."""
         monkeypatch.setenv('HF_REPO_NAME', 'custom/repo-name')
         monkeypatch.setenv('HF_MODEL_FILENAME', 'custom_model.onnx')
-        monkeypatch.setenv('CONFIDENCE_TRESHOLD', '0.75')
+        monkeypatch.setenv('CONFIDENCE_THRESHOLD', '0.75')
         
         settings = Settings()
         

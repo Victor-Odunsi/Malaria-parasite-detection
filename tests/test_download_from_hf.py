@@ -5,7 +5,7 @@ import pytest
 import requests
 from app.backend.config import Settings
 
-from download_from_hf import (
+from app.backend.download_from_hf import (
     download_with_huggingface_hub,
     download_with_requests,
     get_huggingface_url,
@@ -27,7 +27,7 @@ class TestDownloadFromHf:
 
 class TestDownloadWithRequests:
 
-    @patch('download_from_hf.requests.get')
+    @patch('app.backend.download_from_hf.requests.get')
     def test_successful_download(self, mock_get, tmp_path):
         mock_response = Mock()
         mock_response.headers = {'content-length': '1024'}
@@ -44,7 +44,7 @@ class TestDownloadWithRequests:
         assert local_path.exists()
         assert local_path.read_bytes() == b"chunk1chunk2"
 
-        @patch('download_from_hf.requests.get')
+        @patch('app.backend.download_from_hf.requests.get')
         def test_timeout_error(self, mock_get, tmp_path):
             """Test download handles timeout."""
             mock_get.side_effect = requests.exceptions.Timeout("Connection timeout")
@@ -57,7 +57,7 @@ class TestDownloadWithRequests:
             assert result is False
             assert not target_path.exists()
         
-        @patch('download_from_hf.requests.get')
+        @patch('app.backend.download_from_hf.requests.get')
         def test_http_error(self, mock_get, tmp_path):
             """Test download handles HTTP errors."""
             mock_response = Mock()
@@ -73,10 +73,10 @@ class TestDownloadWithRequests:
 
 class TestDownloadWithHuggingFaceHub:
 
-    @patch('download_from_hf.hf_hub_download')
-    @patch('download_from_hf.shutil.copy2')
+    @patch('app.backend.download_from_hf.hf_hub_download')
+    @patch('app.backend.download_from_hf.shutil.copy2')
     def test_successful_download(self, mock_copy, mock_hf_download, tmp_path):
-        cache_path = 'tmp/hf_cache/model.onnx'
+        cache_path = Path('tmp/hf_cache/model.onnx')
         mock_hf_download.return_value = cache_path
 
         local_path = tmp_path / 'model.onnx'
@@ -91,7 +91,7 @@ class TestDownloadWithHuggingFaceHub:
         mock_hf_download.assert_called_once()
         mock_copy.assert_called_once_with(cache_path, local_path)
 
-    @patch('backend.download_from_hf.hf_hub_download')
+    @patch('app.backend.download_from_hf.hf_hub_download')
     def test_hf_hub_not_installed(self, mock_hf_download, tmp_path):
         """Test graceful handling when HF hub not installed."""
         # Simulate ImportError
@@ -105,7 +105,7 @@ class TestDownloadWithHuggingFaceHub:
             
             assert result is False
 
-    @patch('download_from_hf.hf_hub_download')
+    @patch('app.backend.download_from_hf.hf_hub_download')
     def test_hf_hub_download_fails(self, mock_hf_download, tmp_path):
         """Test handling when hf_hub_download raises an exception."""
         mock_hf_download.side_effect = Exception("Network error")
@@ -121,7 +121,7 @@ class TestDownloadWithHuggingFaceHub:
 
 class TestdownloadModel:
 
-    @patch('download_from_hf.download_with_huggingface_hub')
+    @patch('app.backend.download_from_hf.download_with_huggingface_hub')
     def test_successful_download_via_hf(self,mock_download_hf, tmp_path):
         """Test model download via hf_hub_download."""
         settings = Settings(model_dir=tmp_path / 'models')
@@ -138,8 +138,8 @@ class TestdownloadModel:
         mock_download_hf.assert_called_once()
 
 
-    @patch('download_from_hf.download_with_huggingface_hub')
-    @patch('download_from_hf.download_with_requests')
+    @patch('app.backend.download_from_hf.download_with_huggingface_hub')
+    @patch('app.backend.download_from_hf.download_with_requests')
     def test_fallback_to_requests(self, mock_requests, mock_hf, tmp_path):
         """Test fallback to requests when HF hub fails."""
         settings = Settings(model_dir=tmp_path / "models")
@@ -158,8 +158,8 @@ class TestdownloadModel:
         mock_requests.assert_called_once()
 
 
-    @patch('download_from_hf.download_with_huggingface_hub')
-    @patch('download_from_hf.download_with_requests')
+    @patch('app.backend.download_from_hf.download_with_huggingface_hub')
+    @patch('app.backend.download_from_hf.download_with_requests')
     def test_all_methods_fail(self, mock_requests, mock_hf, tmp_path):
         
         settings = Settings(model_dir=tmp_path / "models")
@@ -192,7 +192,3 @@ class TestCheckModelExists:
         
         result = ensure_model_exists(settings)
         assert result is False
-
-
-
-

@@ -17,3 +17,9 @@ __pycache__/
 *.pyc
 
 models/
+
+PlasmoScan/
+
+.pytest_cache/
+
+node_modules/

@@ -19,11 +19,16 @@ def download_with_huggingface_hub(repo_name:str, filename:str, local_path:Path, 
         file_path = hf_hub_download(
             repo_id=repo_name,
             filename=filename,
-            cache_dir=local_path,
+            cache_dir=None,
             token=token
         )
 
-        shutil.copy2(file_path, local_path)
+        cached_path = Path(file_path)
+        logger.info(f"HF cache file location: {cached_path}")
+
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+
+        shutil.copy2(cached_path, local_path)
 
         logger.info(f"Model downloaded successfully to {local_path}")
         return True

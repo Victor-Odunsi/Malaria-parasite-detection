@@ -1,9 +1,15 @@
+"""
+FastAPI backend for Malaria Parasite Detection.
+Includes Grafana Cloud monitoring and CORS support.
+"""
+
 import io
 import logging
 import time
 from pathlib import Path
 from typing import Optional
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +20,6 @@ from app.backend.config import settings
 from app.backend.download_from_hf import download_model
 from app.backend.model import load_model, get_model
 
-# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -26,23 +31,21 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """
     Lifespan context manager for startup and shutdown events.
-    """
-    # Startup
+    """ 
     try:
         logger.info("🚀 Starting Malaria Detection API...")
         
         # Ensure directories exist
         settings.make_model_dir()
         
-        # Download model from HuggingFace (or use cached)
-        logger.info("Downloading/checking model from HuggingFace...")
-        model_path = download_model(settings)
+        # Download ONNX model from HuggingFace (or use cached)
+        logger.info("Downloading/checking ONNX model from HuggingFace...")
+        onnx_model_path = download_model(settings)
         
-        # Load model into memory
-        logger.info("Loading model into memory...")
-        load_model(model_path, settings)
-        
-        logger.info("✓ Model loaded successfully")
+        # Load ONNX model into memory
+        logger.info("Loading ONNX model into memory...")
+        load_model(onnx_model_path, settings)
+        logger.info("✓ ONNX model loaded successfully")
         logger.info("✓ API is ready to accept requests")
         
     except Exception as e:
@@ -70,6 +73,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Prediction-Message", "X-Infected", "X-Processing-Time"]
 )
 
 # Setup Prometheus metrics for Grafana Cloud
@@ -95,7 +99,7 @@ async def root():
         "version": "1.0.0",
         "status": "running",
         "endpoints": {
-            "predict": "/predict (POST)",
+            "predict (ONNX)": "/predict (POST)",
             "health": "/health (GET)",
             "metrics": "/metrics (GET)"
         },

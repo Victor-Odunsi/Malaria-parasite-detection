@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 
 class Settings(BaseSettings):
     
@@ -10,9 +11,10 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_host: str = '0.0.0.0'
 
-    confidence_threshold: float = 0.5
+    confidence_threshold: float = 0.40
 
-    cors_allowed_origins: list[str] = ["*"]
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173/")
+    cors_allowed_origins: list = [FRONTEND_URL]
 
     model_dir: Path = Path('models')
 
