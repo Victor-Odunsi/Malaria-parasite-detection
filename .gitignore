@@ -23,3 +23,5 @@ PlasmoScan/
 .pytest_cache/
 
 node_modules/
+
+*.pyc
