@@ -13,8 +13,11 @@ class Settings(BaseSettings):
 
     confidence_threshold: float = 0.40
 
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
-    cors_allowed_origins: list = [FRONTEND_URL]
+    FRONTEND_URL: str = "http://localhost:5173"
+
+    @property
+    def cors_allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.FRONTEND_URL.split(',')]
 
     model_dir: Path = Path('models')
 
