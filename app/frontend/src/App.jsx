@@ -138,7 +138,7 @@ const MalariaScope = () => {
                 <Microscope className="icon-size-lg" />
               </div>
               <div>
-                <h1 className="brand-title">MalariaScope</h1>
+                <h1 className="brand-title">PlasmoScan</h1>
                 <p className="brand-subtitle">ML-Powered Parasite Detection</p>
               </div>
             </div>

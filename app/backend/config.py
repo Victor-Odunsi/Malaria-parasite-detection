@@ -13,8 +13,11 @@ class Settings(BaseSettings):
 
     confidence_threshold: float = 0.40
 
-    FRONTEND_URL: str = "http://localhost:5173"
-
+    FRONTEND_URL: str = (
+    "http://localhost:5173,"
+    "https://malaria-parasite-detection-ecru.vercel.app"
+    )
+    
     @property
     def cors_allowed_origins(self) -> list[str]:
         return [origin.strip() for origin in self.FRONTEND_URL.split(',')]
