@@ -10,6 +10,10 @@ const MalariaScope = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
+
+  // Get backend URL from environment variable or use localhost as fallback
+  const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
   const facts = [
     "The female Anopheles mosquito is the only mosquito capable of transmitting Plasmodium to humans.",
@@ -72,28 +76,54 @@ const MalariaScope = () => {
     if (!selectedFile) return;
 
     setIsAnalyzing(true);
+    setLoadingMessage('Uploading image...');
+    
     const formData = new FormData();
     formData.append('file', selectedFile);
 
+    // Show "waking up" message after 5 seconds for Render free tier
+    const wakeUpTimer = setTimeout(() => {
+      setLoadingMessage('Backend is waking up from sleep. This may take up to 60 seconds...');
+    }, 5000);
+
     try {
-      const response = await fetch('http://localhost:8000/predict', {
+      // Create abort controller for 90-second timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 seconds
+
+      const response = await fetch(`${API_URL}/predict`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal,
       });
 
-      if (!response.ok) throw new Error('Analysis failed');
+      clearTimeout(timeoutId);
+      clearTimeout(wakeUpTimer);
+
+      if (!response.ok) {
+        throw new Error(`Analysis failed: ${response.statusText}`);
+      }
 
       const infected = response.headers.get('X-Infected') === 'true';
       const message = response.headers.get('X-Prediction-Message') || 'Analysis complete';
+      const processingTime = response.headers.get('X-Processing-Time');
       const blob = await response.blob();
       const imageUrl = URL.createObjectURL(blob);
 
       setPreviewUrl(imageUrl);
-      setResult({ infected, message });
+      setResult({ infected, message, processingTime });
     } catch (error) {
-      alert('Error analyzing image: ' + error.message);
+      clearTimeout(wakeUpTimer);
+      
+      if (error.name === 'AbortError') {
+        alert('Request timed out after 90 seconds. The backend might be sleeping. Please try again.');
+      } else {
+        alert('Error analyzing image: ' + error.message);
+      }
+      setResult(null);
     } finally {
       setIsAnalyzing(false);
+      setLoadingMessage('');
     }
   };
 
@@ -108,12 +138,14 @@ const MalariaScope = () => {
                 <Microscope className="icon-size-lg" />
               </div>
               <div>
-                <h1 className="brand-title">PlasmoScan</h1>
-                <p className="brand-subtitle">ML-Powered Malaria Parasite Detection</p>
+                <h1 className="brand-title">MalariaScope</h1>
+                <p className="brand-subtitle">ML-Powered Parasite Detection</p>
               </div>
             </div>
-            <a
-              href="https://forms.gle/w8M3ZmSbZHQ2wKtj7"
+            
+            {/* FIX: The unneeded tokens were here. Wrapped the attributes in a proper <a> tag. */}
+            <a 
+              href="https://forms.gle/u9xVCWjq6EuFmXpi9"
               target="_blank"
               rel="noopener noreferrer"
               className="feedback-btn"
@@ -129,7 +161,7 @@ const MalariaScope = () => {
           <div className="title-section">
             <h2 className="main-title">Detect Malaria Parasites</h2>
             <p className="main-subtitle">
-              Upload a blood cell microscopy image for instant analysis
+              Upload a blood cell microscopy image for instant ML-powered analysis
             </p>
           </div>
 
@@ -186,7 +218,9 @@ const MalariaScope = () => {
           {isAnalyzing && (
             <div className="loading-section">
               <Loader2 className="loading-spinner" />
-              <p className="loading-text">Analyzing image...</p>
+              <p className="loading-text">
+                {loadingMessage || 'Analyzing image...'}
+              </p>
             </div>
           )}
 
@@ -199,7 +233,12 @@ const MalariaScope = () => {
                 ) : (
                   <CheckCircle className="result-icon" />
                 )}
-                <p className="result-message">{result.message}</p>
+                <div>
+                  <p className="result-message">{result.message}</p>
+                  {result.processingTime && (
+                    <p className="result-time">Processing time: {result.processingTime}</p>
+                  )}
+                </div>
               </div>
             </div>
           )}
