@@ -14,8 +14,10 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import Counter, Histogram, Gauge
 from PIL import Image
 
+from app.backend.pusher import start_pusher
 from app.backend.config import settings
 from app.backend.download_from_hf import download_model
 from app.backend.model import load_model, get_model
@@ -25,6 +27,44 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+
+# Custom business metrics
+predictions_total = Counter(
+    'malaria_predictions_total', 
+    'Total predictions', 
+    ['result', 'status']
+)
+prediction_latency = Histogram(
+    'malaria_prediction_latency_seconds', 
+    'Prediction processing time', 
+    ['result']
+)
+image_processing_time = Histogram(
+    'malaria_image_processing_seconds', 
+    'Image load/decode time'
+)
+model_inference_time = Histogram(
+    'malaria_model_inference_seconds', 
+    'Model inference time'
+)
+infection_rate = Gauge(
+    'malaria_infection_rate', 
+    'Current infection detection rate'
+)
+image_size_bytes = Histogram(
+    'malaria_image_size_bytes', 
+    'Uploaded image sizes'
+)
+errors_total = Counter(
+    'malaria_errors_total', 
+    'Total errors', 
+    ['error_type']
+)
+
+# Track infection rate
+infections_count = 0
+total_predictions = 0
 
 
 @asynccontextmanager
@@ -37,6 +77,9 @@ async def lifespan(app: FastAPI):
         
         # Ensure directories exist
         settings.make_model_dir()
+
+        pusher = start_pusher()
+        pusher.start()
         
         # Download ONNX model from HuggingFace (or use cached)
         logger.info("Downloading/checking ONNX model from HuggingFace...")
@@ -56,6 +99,7 @@ async def lifespan(app: FastAPI):
     
     # Shutdown (cleanup if needed)
     logger.info("🛑 Shutting down Malaria Detection API...")
+    pusher.stop()
 
 
 # Initialize FastAPI with lifespan
@@ -137,6 +181,103 @@ async def health_check():
         )
 
 
+# @app.post("/predict")
+# async def predict(
+#     request: Request,
+#     file: UploadFile = File(...)
+# ):
+#     """
+#     Predict malaria parasites in uploaded blood cell image.
+    
+#     Args:
+#         file: Image file (JPG, PNG)
+        
+#     Returns:
+#         Annotated image if infection detected, original if not
+        
+#     Response Headers:
+#         X-Prediction-Message: Detection message
+#         X-Infected: "true" or "false"
+#     """
+#     start_time = time.time()
+    
+#     try:
+#         # Validate file type
+#         if not file.content_type or not file.content_type.startswith("image/"):
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail=f"Invalid file type: {file.content_type}. Please upload an image."
+#             )
+        
+#         # Read image
+#         logger.info(f"Processing image: {file.filename}")
+#         contents = await file.read()
+        
+#         # Open as PIL Image
+#         try:
+#             image = Image.open(io.BytesIO(contents))
+#         except Exception as e:
+#             logger.error(f"Failed to open image: {e}")
+#             raise HTTPException(
+#                 status_code=400,
+#                 detail="Invalid image file. Could not decode image."
+#             )
+        
+#         # Get model and run prediction
+#         model = get_model()
+#         result = model.predict(image)
+        
+#         # Extract results
+#         result_image = result["image"]
+#         message = result["message"]
+#         has_infection = "Malaria" in message
+        
+#         # Log prediction
+#         latency = time.time() - start_time
+#         logger.info(
+#             f"Prediction complete: {message} "
+#             f"(latency: {latency:.2f}s, file: {file.filename})"
+#         )
+        
+#         # Convert PIL Image to bytes
+#         img_byte_arr = io.BytesIO()
+#         result_image.save(img_byte_arr, format='JPEG', quality=95)
+#         img_byte_arr.seek(0)
+        
+#         # Return image with custom headers
+#         return StreamingResponse(
+#             img_byte_arr,
+#             media_type="image/jpeg",
+#             headers={
+#                 "X-Prediction-Message": message,
+#                 "X-Infected": str(has_infection).lower(),
+#                 "X-Processing-Time": f"{latency:.2f}s"
+#             }
+#         )
+        
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         logger.error(f"Prediction failed: {e}", exc_info=True)
+#         raise HTTPException(
+#             status_code=500,
+#             detail=f"Prediction failed: {str(e)}"
+#         )
+
+
+# @app.exception_handler(Exception)
+# async def global_exception_handler(request: Request, exc: Exception):
+#     """Global exception handler for unhandled errors."""
+#     logger.error(f"Unhandled exception: {exc}", exc_info=True)
+#     return JSONResponse(
+#         status_code=500,
+#         content={
+#             "error": "Internal server error",
+#             "detail": str(exc),
+#             "path": str(request.url)
+#         }
+#     )
+
 @app.post("/predict")
 async def predict(
     request: Request,
@@ -154,42 +295,66 @@ async def predict(
     Response Headers:
         X-Prediction-Message: Detection message
         X-Infected: "true" or "false"
+        X-Processing-Time: Processing time in seconds
     """
+    global infections_count, total_predictions
     start_time = time.time()
     
     try:
         # Validate file type
         if not file.content_type or not file.content_type.startswith("image/"):
+            errors_total.labels(error_type='invalid_file_type').inc()
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid file type: {file.content_type}. Please upload an image."
             )
         
-        # Read image
+        # Read image and measure size
         logger.info(f"Processing image: {file.filename}")
         contents = await file.read()
+        image_size_bytes.observe(len(contents))
         
-        # Open as PIL Image
+        # Open as PIL Image and measure decode time
+        decode_start = time.time()
         try:
             image = Image.open(io.BytesIO(contents))
         except Exception as e:
             logger.error(f"Failed to open image: {e}")
+            errors_total.labels(error_type='image_decode_failed').inc()
             raise HTTPException(
                 status_code=400,
                 detail="Invalid image file. Could not decode image."
             )
+        image_processing_time.observe(time.time() - decode_start)
         
-        # Get model and run prediction
+        # Get model and run prediction (measure inference time)
+        inference_start = time.time()
         model = get_model()
         result = model.predict(image)
+        model_inference_time.observe(time.time() - inference_start)
         
         # Extract results
         result_image = result["image"]
         message = result["message"]
         has_infection = "Malaria" in message
         
+        # Update metrics
+        total_predictions += 1
+        if has_infection:
+            infections_count += 1
+        
+        # Calculate and set infection rate
+        infection_rate.set(
+            infections_count / total_predictions if total_predictions > 0 else 0
+        )
+        
+        result_label = "infected" if has_infection else "not_infected"
+        predictions_total.labels(result=result_label, status='success').inc()
+        
         # Log prediction
         latency = time.time() - start_time
+        prediction_latency.labels(result=result_label).observe(latency)
+        
         logger.info(
             f"Prediction complete: {message} "
             f"(latency: {latency:.2f}s, file: {file.filename})"
@@ -212,24 +377,13 @@ async def predict(
         )
         
     except HTTPException:
+        predictions_total.labels(result='error', status='http_error').inc()
         raise
     except Exception as e:
         logger.error(f"Prediction failed: {e}", exc_info=True)
+        errors_total.labels(error_type='unknown').inc()
+        predictions_total.labels(result='error', status='system_error').inc()
         raise HTTPException(
             status_code=500,
             detail=f"Prediction failed: {str(e)}"
         )
-
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    """Global exception handler for unhandled errors."""
-    logger.error(f"Unhandled exception: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "Internal server error",
-            "detail": str(exc),
-            "path": str(request.url)
-        }
-    )
