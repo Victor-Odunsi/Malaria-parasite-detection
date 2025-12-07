@@ -84,7 +84,7 @@ const MalariaScope = () => {
     // Show "waking up" message after 5 seconds for Render free tier
     const wakeUpTimer = setTimeout(() => {
       setLoadingMessage('Backend is waking up from sleep. This may take up to 60 seconds...');
-    }, 8000);
+    }, 10000);
 
     try {
       // Create abort controller for 90-second timeout

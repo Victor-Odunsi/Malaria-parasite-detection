@@ -23,11 +23,15 @@ def push_to_grafana(interval: int = 15):
     
     auth = base64.b64encode(f"{user}:{password}".encode()).decode()
     logger.info(f"Grafana pusher started (interval: {interval}s)")
-    
+    logger.info(f"Pushing to: {url}")
+
     while True:
         try:
+            logger.debug("Attempting to push metrics...")
             metrics = generate_latest()
-            requests.post(
+            logger.debug(f"Generated {len(metrics)} bytes of metrics")
+
+            response = requests.post(
                 url,
                 data=metrics,
                 headers={
@@ -36,6 +40,9 @@ def push_to_grafana(interval: int = 15):
                 },
                 timeout=10
             )
+
+            logger.info(f"Metrics push response: {response.status_code} - {response.text}")
+
         except Exception as e:
             logger.error(f"Metrics push failed: {e}")
         time.sleep(interval)
