@@ -24,4 +24,4 @@ PlasmoScan/
 
 node_modules/
 
-*.pyc
+.env

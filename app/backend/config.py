@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+from typing import Optional
 
 class Settings(BaseSettings):
     
@@ -10,6 +11,10 @@ class Settings(BaseSettings):
 
     api_port: int = 8000
     api_host: str = '0.0.0.0'
+
+    grafana_url: Optional[str] = None
+    grafana_user: Optional[str] = None
+    grafana_password: Optional[str] = None
 
     confidence_threshold: float = 0.40
 

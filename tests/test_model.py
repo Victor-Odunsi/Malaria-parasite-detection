@@ -120,12 +120,12 @@ class TestMalariaDetector:
         
         # Add one strong infected detection (class 0)
         # Prediction at index 0: x=320, y=320, w=100, h=100, conf0=0.9, conf1=0.1
-        mock_output[0, 0, 0] = 320  # x_center
-        mock_output[0, 1, 0] = 320  # y_center
-        mock_output[0, 2, 0] = 100  # width
-        mock_output[0, 3, 0] = 100  # height
-        mock_output[0, 4, 0] = 0.9  # class 0 confidence (infected)
-        mock_output[0, 5, 0] = 0.1  # class 1 confidence (uninfected)
+        mock_output[0, 0, 0] = 320 
+        mock_output[0, 1, 0] = 320 
+        mock_output[0, 2, 0] = 100 
+        mock_output[0, 3, 0] = 100 
+        mock_output[0, 4, 0] = 0.9 
+        mock_output[0, 5, 0] = 0.1 
         
         boxes = detector._extract_infected_cells(
             [mock_output],
@@ -150,9 +150,9 @@ class TestMalariaDetector:
         
         # Create overlapping boxes (same object detected 3 times)
         boxes = [
-            [100, 100, 200, 200],  # Box 1
-            [105, 105, 205, 205],  # Box 2 (overlaps with Box 1)
-            [110, 110, 210, 210],  # Box 3 (overlaps with Box 1 & 2)
+            [100, 100, 200, 200],
+            [105, 105, 205, 205],
+            [110, 110, 210, 210],
         ]
         scores = [0.9, 0.8, 0.7]
         
@@ -175,9 +175,9 @@ class TestMalariaDetector:
         
         # Create non-overlapping boxes (different objects)
         boxes = [
-            [100, 100, 200, 200],  # Object 1
-            [300, 300, 400, 400],  # Object 2 (far away)
-            [500, 500, 600, 600],  # Object 3 (far away)
+            [100, 100, 200, 200],
+            [300, 300, 400, 400],
+            [500, 500, 600, 600],
         ]
         scores = [0.9, 0.85, 0.8]
         
@@ -197,12 +197,12 @@ class TestMalariaDetector:
         
         # Create YOLOv8 format output with infected detection
         mock_output = np.zeros((1, 6, 8400), dtype=np.float32)
-        mock_output[0, 0, 0] = 320  # x
-        mock_output[0, 1, 0] = 320  # y
-        mock_output[0, 2, 0] = 100  # w
-        mock_output[0, 3, 0] = 100  # h
-        mock_output[0, 4, 0] = 0.9  # infected conf
-        mock_output[0, 5, 0] = 0.1  # uninfected conf
+        mock_output[0, 0, 0] = 320 
+        mock_output[0, 1, 0] = 320 
+        mock_output[0, 2, 0] = 100 
+        mock_output[0, 3, 0] = 100 
+        mock_output[0, 4, 0] = 0.9 
+        mock_output[0, 5, 0] = 0.1
         
         mock_session.run.return_value = [mock_output]
         mock_session_class.return_value = mock_session
@@ -230,8 +230,8 @@ class TestMalariaDetector:
         mock_output[0, 1, 0] = 320
         mock_output[0, 2, 0] = 100
         mock_output[0, 3, 0] = 100
-        mock_output[0, 4, 0] = 0.1  # infected conf (low)
-        mock_output[0, 5, 0] = 0.9  # uninfected conf (high)
+        mock_output[0, 4, 0] = 0.1 
+        mock_output[0, 5, 0] = 0.9 
         
         mock_session.run.return_value = [mock_output]
         mock_session_class.return_value = mock_session

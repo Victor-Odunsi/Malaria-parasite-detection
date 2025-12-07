@@ -78,8 +78,7 @@ async def lifespan(app: FastAPI):
         # Ensure directories exist
         settings.make_model_dir()
 
-        pusher = start_pusher()
-        pusher.start()
+        start_pusher()
         
         # Download ONNX model from HuggingFace (or use cached)
         logger.info("Downloading/checking ONNX model from HuggingFace...")
@@ -99,7 +98,6 @@ async def lifespan(app: FastAPI):
     
     # Shutdown (cleanup if needed)
     logger.info("🛑 Shutting down Malaria Detection API...")
-    pusher.stop()
 
 
 # Initialize FastAPI with lifespan
@@ -180,103 +178,6 @@ async def health_check():
             }
         )
 
-
-# @app.post("/predict")
-# async def predict(
-#     request: Request,
-#     file: UploadFile = File(...)
-# ):
-#     """
-#     Predict malaria parasites in uploaded blood cell image.
-    
-#     Args:
-#         file: Image file (JPG, PNG)
-        
-#     Returns:
-#         Annotated image if infection detected, original if not
-        
-#     Response Headers:
-#         X-Prediction-Message: Detection message
-#         X-Infected: "true" or "false"
-#     """
-#     start_time = time.time()
-    
-#     try:
-#         # Validate file type
-#         if not file.content_type or not file.content_type.startswith("image/"):
-#             raise HTTPException(
-#                 status_code=400,
-#                 detail=f"Invalid file type: {file.content_type}. Please upload an image."
-#             )
-        
-#         # Read image
-#         logger.info(f"Processing image: {file.filename}")
-#         contents = await file.read()
-        
-#         # Open as PIL Image
-#         try:
-#             image = Image.open(io.BytesIO(contents))
-#         except Exception as e:
-#             logger.error(f"Failed to open image: {e}")
-#             raise HTTPException(
-#                 status_code=400,
-#                 detail="Invalid image file. Could not decode image."
-#             )
-        
-#         # Get model and run prediction
-#         model = get_model()
-#         result = model.predict(image)
-        
-#         # Extract results
-#         result_image = result["image"]
-#         message = result["message"]
-#         has_infection = "Malaria" in message
-        
-#         # Log prediction
-#         latency = time.time() - start_time
-#         logger.info(
-#             f"Prediction complete: {message} "
-#             f"(latency: {latency:.2f}s, file: {file.filename})"
-#         )
-        
-#         # Convert PIL Image to bytes
-#         img_byte_arr = io.BytesIO()
-#         result_image.save(img_byte_arr, format='JPEG', quality=95)
-#         img_byte_arr.seek(0)
-        
-#         # Return image with custom headers
-#         return StreamingResponse(
-#             img_byte_arr,
-#             media_type="image/jpeg",
-#             headers={
-#                 "X-Prediction-Message": message,
-#                 "X-Infected": str(has_infection).lower(),
-#                 "X-Processing-Time": f"{latency:.2f}s"
-#             }
-#         )
-        
-#     except HTTPException:
-#         raise
-#     except Exception as e:
-#         logger.error(f"Prediction failed: {e}", exc_info=True)
-#         raise HTTPException(
-#             status_code=500,
-#             detail=f"Prediction failed: {str(e)}"
-#         )
-
-
-# @app.exception_handler(Exception)
-# async def global_exception_handler(request: Request, exc: Exception):
-#     """Global exception handler for unhandled errors."""
-#     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-#     return JSONResponse(
-#         status_code=500,
-#         content={
-#             "error": "Internal server error",
-#             "detail": str(exc),
-#             "path": str(request.url)
-#         }
-#     )
 
 @app.post("/predict")
 async def predict(
