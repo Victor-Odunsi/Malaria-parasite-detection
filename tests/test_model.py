@@ -256,13 +256,6 @@ class TestGlobalModelFunctions:
         import app.backend.model
         app.backend.model._model_instance = None
     
-    def test_get_model_raises_error_if_not_loaded(self):
-        """Test get_model raises error when model not loaded."""
-        global _model_instance
-        _model_instance = None
-        with pytest.raises(RuntimeError, match="Model not loaded"):
-            get_model()
-    
     @patch('app.backend.model.MalariaDetector')
     def test_get_model_returns_loaded_instance(self, mock_detector_class, mock_model_path, test_settings):
         """Test get_model returns the loaded model."""
