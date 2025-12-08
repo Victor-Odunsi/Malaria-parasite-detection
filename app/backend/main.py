@@ -34,7 +34,7 @@ predictions_total = Counter(
     'Total predictions', 
     ['result', 'status']
 )
-prediction_latency = Gauge(
+prediction_latency_seconds = Gauge(
     'malaria_prediction_latency_seconds', 
     'Prediction processing time', 
     ['result']
@@ -43,7 +43,7 @@ image_processing_time = Histogram(
     'malaria_image_processing_seconds', 
     'Image load/decode time'
 )
-model_inference_time = Gauge(
+model_inference_time_sec = Gauge(
     'malaria_model_inference_seconds', 
     'Model inference time'
 )

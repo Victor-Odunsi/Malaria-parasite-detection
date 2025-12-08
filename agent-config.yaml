@@ -3,7 +3,7 @@ server:
 
 metrics:
   global:
-    scrape_interval: 60s
+    scrape_interval: 30s
     remote_write:
       - url: ${GRAFANA_URL}
         basic_auth:
