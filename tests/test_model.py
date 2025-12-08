@@ -11,7 +11,12 @@ from unittest.mock import Mock, patch
 
 from app.backend.model import MalariaDetector, load_model, get_model
 from app.backend.config import Settings
+from app.backend.model import _model_instance
 
+@pytest.fixture(autouse=True)
+def reset_model_instance():
+    global _model_instance
+    _model_instance = None
 
 @pytest.fixture
 def test_settings():
