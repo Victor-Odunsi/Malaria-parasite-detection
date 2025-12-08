@@ -258,6 +258,8 @@ class TestGlobalModelFunctions:
     
     def test_get_model_raises_error_if_not_loaded(self):
         """Test get_model raises error when model not loaded."""
+        global _model_instance
+        _model_instance = None
         with pytest.raises(RuntimeError, match="Model not loaded"):
             get_model()
     
