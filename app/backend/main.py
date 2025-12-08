@@ -17,7 +17,6 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 from PIL import Image
 
-from app.backend.pusher import start_pusher
 from app.backend.config import settings
 from app.backend.download_from_hf import download_model
 from app.backend.model import load_model, get_model
