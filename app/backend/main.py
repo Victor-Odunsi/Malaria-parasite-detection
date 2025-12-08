@@ -35,8 +35,8 @@ predictions_total = Counter(
     ['result', 'status']
 )
 prediction_latency_seconds = Gauge(
-    'malaria_prediction_latency_seconds', 
-    'Prediction processing time', 
+    'malaria_prediction_latency_sec', 
+    'Prediction processing time_sec', 
     ['result']
 )
 image_processing_time = Histogram(
@@ -44,8 +44,8 @@ image_processing_time = Histogram(
     'Image load/decode time'
 )
 model_inference_time_sec = Gauge(
-    'malaria_model_inference_seconds', 
-    'Model inference time'
+    'malaria_model_inference_sec', 
+    'Model inference time_sec'
 )
 infection_rate = Gauge(
     'malaria_infection_rate', 
@@ -233,7 +233,7 @@ async def predict(
         inference_start = time.time()
         model = get_model()
         result = model.predict(image)
-        model_inference_time.set(time.time() - inference_start)
+        model_inference_time_sec.set(time.time() - inference_start)
         
         # Extract results
         result_image = result["image"]
@@ -255,7 +255,7 @@ async def predict(
         
         # Log prediction
         latency = time.time() - start_time
-        prediction_latency.labels(result=result_label).set(latency)
+        prediction_latency_seconds.labels(result=result_label).set(latency)
         
         logger.info(
             f"Prediction complete: {message} "
