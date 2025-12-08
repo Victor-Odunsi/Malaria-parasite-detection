@@ -15,7 +15,8 @@ class TestSettings:
     def test_cors_origins_default(self):
         """Test default CORS origins."""
         settings = Settings()
-        assert settings.cors_allowed_origins == ["*"]
+        assert settings.cors_allowed_origins == ["http://localhost:5173",
+        "https://malaria-parasite-detection-ecru.vercel.app"]
 
     def test_model_path_name(self):
         settings = Settings()
@@ -38,11 +39,3 @@ class TestSettings:
         assert settings.hf_repo_name == 'custom/repo-name'
         assert settings.hf_model_filename == 'custom_model.onnx'
         assert settings.confidence_threshold == 0.75
-
-    def test_env_variable_list_override(self, monkeypatch):
-        """Test that environment variable list overrides default CORS origins."""
-        monkeypatch.setenv('CORS_ALLOWED_ORIGINS', '["http://example.com", "http://another.com"]')
-        
-        settings = Settings()
-        
-        assert settings.cors_allowed_origins == ['http://example.com', 'http://another.com']

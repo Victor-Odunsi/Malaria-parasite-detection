@@ -222,7 +222,7 @@ class TestCORS:
         response = client.options(
             "/predict",
             headers={
-                "Origin": "http://localhost:3000",
+                "Origin": "http://localhost:5173",
                 "Access-Control-Request-Method": "POST"
             }
         )

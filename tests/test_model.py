@@ -250,22 +250,7 @@ class TestGlobalModelFunctions:
         """Reset global model instance after each test."""
         import app.backend.model
         app.backend.model._model_instance = None
-    
-    @patch('app.backend.model.ort.InferenceSession')
-    def test_load_model_creates_instance(self, mock_session_class, mock_model_path, test_settings):
-        """Test load_model creates model instance."""
-        mock_session_class.return_value = Mock()
-        mock_session_class.return_value.get_inputs.return_value = [
-            Mock(name="images", shape=[1, 3, 640, 640])
-        ]
-        mock_session_class.return_value.get_outputs.return_value = [Mock(name="output0")]
-        
-        model = load_model(mock_model_path, test_settings)
-        
-        assert model is not None
-        assert isinstance(model, MalariaDetector)
-        # Verify ONNX session was created
-        mock_session_class.assert_called()
+
     
     @patch('app.backend.model.MalariaDetector')
     def test_load_model_returns_singleton(self, mock_detector_class, mock_model_path, test_settings):

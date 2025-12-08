@@ -1,0 +1,33 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run backend tests
+        run: |
+          pytest --maxfail=1 --disable-warnings -q
+
+      - name: Deploy to Render if tests pass
+        if: success()
+        run: |
+          curl -X POST "$RENDER_DEPLOY_HOOK"
+    env:
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
