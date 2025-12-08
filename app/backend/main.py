@@ -77,8 +77,6 @@ async def lifespan(app: FastAPI):
         
         # Ensure directories exist
         settings.make_model_dir()
-
-        start_pusher()
         
         # Download ONNX model from HuggingFace (or use cached)
         logger.info("Downloading/checking ONNX model from HuggingFace...")

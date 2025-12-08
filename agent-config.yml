@@ -1,0 +1,19 @@
+server:
+  log_level: info
+
+metrics:
+  global:
+    scrape_interval: 60s
+    remote_write:
+      - url: ${GRAFANA_URL}
+        basic_auth:
+          username: ${GRAFANA_USER}
+          password: ${GRAFANA_PASSWORD}
+  
+  configs:
+    - name: malaria_metrics
+      scrape_configs:
+        - job_name: 'malaria-detection'
+          static_configs:
+            - targets: ['localhost:${PORT}']
+          metrics_path: '/metrics'
