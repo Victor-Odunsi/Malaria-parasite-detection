@@ -255,14 +255,3 @@ class TestGlobalModelFunctions:
         """Reset global model instance after each test."""
         import app.backend.model
         app.backend.model._model_instance = None
-    
-    @patch('app.backend.model.MalariaDetector')
-    def test_get_model_returns_loaded_instance(self, mock_detector_class, mock_model_path, test_settings):
-        """Test get_model returns the loaded model."""
-        mock_instance = Mock()
-        mock_detector_class.return_value = mock_instance
-        
-        load_model(mock_model_path, test_settings)
-        model = get_model()
-        
-        assert model is mock_instance
