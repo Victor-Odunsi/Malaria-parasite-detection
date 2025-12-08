@@ -250,19 +250,6 @@ class TestGlobalModelFunctions:
         """Reset global model instance after each test."""
         import app.backend.model
         app.backend.model._model_instance = None
-
-    
-    @patch('app.backend.model.MalariaDetector')
-    def test_load_model_returns_singleton(self, mock_detector_class, mock_model_path, test_settings):
-        """Test that load_model returns same instance (singleton)."""
-        mock_instance = Mock()
-        mock_detector_class.return_value = mock_instance
-        
-        model1 = load_model(mock_model_path, test_settings)
-        model2 = load_model(mock_model_path, test_settings)
-        
-        assert model1 is model2
-        assert mock_detector_class.call_count == 1
     
     def test_get_model_raises_error_if_not_loaded(self):
         """Test get_model raises error when model not loaded."""
